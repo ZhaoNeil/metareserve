@@ -65,17 +65,16 @@ class Reservation(object):
         return len(self._nodes)
 
 
+from enum import Enum as _Enum
+from time import sleep as _time_sleep
+from threading import Thread as _Thread
 
+import datetime as _datetime
 class ReservationWait(object):
     '''ReservationWait object, to let clients wait for the reservation to be ready.
     Args:
         status (optional Status): Object representing status of reservation.'''
 
-    from enum import Enum as _Enum
-    from time import sleep as _time_sleep
-    from threading import Thread as _Thread
-    from datetime.datetime import now as _datetime_now
-    from datetime import timedelta as _datetime_timedelta
     class Status(_Enum):
         PENDING = 0,
         STARTED = 1,
@@ -116,13 +115,13 @@ class ReservationWait(object):
             raise ValueError('Cannot wait more than (or equal to) {} seconds per period (specified {})'.format(timeout_seconds, request_sleep_period))
         t = _Thread(target=get)
 
-        time_out = _datetime_now() + _datetime_timedelta(seconds=timeout_seconds)
-        while _datetime_now() < time_out:
+        time_out = _datetime.datetime.now() + _datetime.timedelta(seconds=timeout_seconds)
+        while _datetime.datetime.now() < time_out:
             val = get(blocking=False)
             if val:
                 return val
             _time_sleep(request_sleep_period)
-        return None        
+        return None
 
 
 
