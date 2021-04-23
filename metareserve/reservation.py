@@ -126,15 +126,18 @@ class ReservationWait(object):
 
 
 class _AbstractReservationRequest(object):
-    '''Abstract object representing a reservation
+    '''Abstract object representing a reservation.
     Args:
         num_nodes (int): Number of nodes in reservation.
-        duration_minutes (int): Number of minutes to reserve nodes
+        duration_minutes (int): Number of minutes to reserve nodes.
+        location (str, optional): Location for reserved nodes.
+        extra_info (dict, optional): Key-value mapping with extra info.
 
     '''
-    def __init__(self, num_nodes, location=''):
+    def __init__(self, num_nodes, location='', extra_info=dict()):
         self._num_nodes = num_nodes
         self._location = location
+        self._extra_info = extra_info
 
     @property
     def num_nodes(self):
@@ -144,6 +147,10 @@ class _AbstractReservationRequest(object):
     def location(self):
         return self._location
 
+    @property
+    def extra_info(self):
+        return self._extra_info
+
 
 
 class ReservationRequest(_AbstractReservationRequest):
@@ -151,8 +158,7 @@ class ReservationRequest(_AbstractReservationRequest):
     Args:
         num_nodes (int): Number of nodes in reservation.
         duration_minutes (int): Number of minutes to reserve nodes.
-        location (str, optional): Location for reserved nodes
-    '''
+        location (str, optional): Location for reserved nodes.'''
     def __init__(self, num_nodes, duration_minutes, location=''):
         super.__init__(num_nodes, location=location)
         self._duration_minutes = duration_minutes
@@ -169,8 +175,7 @@ class TimeSlotReservationRequest(_AbstractReservationRequest):
         num_nodes (int): Number of nodes in reservation.
         duration_start (datetime): Start time for reserved nodes.
         duration_end (datetime): End time for reserved nodes.
-        location (str, optional): Location for reserved nodes
-    '''
+        location (str, optional): Location for reserved nodes.'''
     def __init__(self, num_nodes, duration_start, duration_end, location=''):
         super.__init__(num_nodes, location=location)
         self._duration_start = duration_start
