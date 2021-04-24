@@ -6,7 +6,4 @@ A generic reservation interface.
 
 
 ## Installing
-Simply run the following to initialize the system on DAS5:
-```bash
-python3 main.py init
-```
+Simply run `pip3 install metareserve --user`.
