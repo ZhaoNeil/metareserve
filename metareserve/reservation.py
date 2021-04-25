@@ -1,3 +1,7 @@
+from enum import Enum as _Enum
+from time import sleep as _time_sleep
+import datetime as _datetime
+import concurrent.futures
 
 class Node(object):
     def __init__(self, node_id, node_name='', ip_local='', ip_public='', port=22, extra_info=dict()):
@@ -67,56 +71,68 @@ class Reservation(object):
         return len(self._nodes)
 
 
-from enum import Enum as _Enum
-from time import sleep as _time_sleep
-from threading import Thread as _Thread
-
-import datetime as _datetime
 class ReservationWait(object):
     '''ReservationWait object, to let clients wait for the reservation to be ready.
     Args:
         status (optional Status): Object representing status of reservation.'''
 
     class Status(_Enum):
+        '''Enum to represent different possible states of a reservation.'''
         PENDING = 0,
-        STARTED = 1,
+        SUCCESS = 1,
         FAILED = 2
 
-    def __init__(self, status=Status.PENDING):
+    def __init__(self, func, *args, status=Status.PENDING):
+        self._thread_executor = ThreadPoolExecutor(max_workers=1)
+        self._future = self._thread_executor.submit(func, *args)
+        self._future.add_done_callback(lambda x: self._status = Status.FAILED if x.is_cancelled() else Status.SUCCESS)
         self._status = status
+
 
     @property
     def status(self):
         return self._status
 
-    '''Gets a reservation. Raises exception when reservation fails/failed.
-    Args:
-        blocking (optional bool): If set, blocks until reservation is ready. Otherwise, instantly returns either reservation object or `None` if not ready,
-    Raises:
-        ValueError, if reservation fails/failed.
 
-    Returns:
-        Reservation object (once ready). If `blocking` is not set, directly returns None if reservation object is not ready.'''
     def get(blocking=True):
-        pass
+        '''Gets a reservation. Raises exception when reservation fails/failed.
+        Args:
+            blocking (optional bool): If set, blocks until reservation is ready. Otherwise, instantly returns either reservation object or `None` if not ready,
+
+        Raises:
+            ValueError, if reservation fails/failed or shutdown occured before completion.
+
+        Returns:
+            Reservation object (once ready). If `blocking` is not set, directly returns None if reservation object is not ready.'''
+        if self._status == Status.FAILED:
+            raise ValueError('Reservation failed.')
+        if self._future.is_cancelled():
+            raise ValueError('Reservation request was cancelled.')
+        if blocking or self._future.done():
+            try:
+                nodes = self._future.result()
+            except Exception as e:
+                self._status = Status.FAILED
+                raise ValueError('Experienced error', e)
+        else:
+            nodes = None
+        return nodes
 
 
-    '''Gets a reservation. Specify a timeout in seconds to get the request. Once the allocated time has passed without getting the reservation, returns `None`.
-    Args:
-        timeout_seconds (optional int): Number of seconds to wait before giving up and returning `None`.
-        request_sleep_period (optional int): Number of seconds to wait between requests.
+    def get_or_timeout(timeout_seconds=30, request_sleep_period=5):
+        '''Gets a reservation. Specify a timeout in seconds to get the request. Once the allocated time has passed without getting the reservation, returns `None`.
+        Args:
+            timeout_seconds (optional int): Number of seconds to wait before giving up and returning `None`.
+            request_sleep_period (optional int): Number of seconds to wait between requests.
 
-    Raises:
-        ValueError, if reservation fails/failed.
+        Raises:
+            ValueError, if reservation fails/failed.
 
-    Returns:
-        Reservation object, if ready before `timeout_seconds`. Otherwise `None`.
-        '''
-    def get_or_timeout(timeout_seconds=30, request_sleep_period=10):
+        Returns:
+            Reservation object, if ready before `timeout_seconds`. Otherwise `None`.'''
         if request_sleep_period >= timeout_seconds:
             raise ValueError('Cannot wait more than (or equal to) {} seconds per period (specified {})'.format(timeout_seconds, request_sleep_period))
-        t = _Thread(target=get)
-
+  
         time_out = _datetime.datetime.now() + _datetime.timedelta(seconds=timeout_seconds)
         while _datetime.datetime.now() < time_out:
             val = get(blocking=False)
@@ -124,6 +140,14 @@ class ReservationWait(object):
                 return val
             _time_sleep(request_sleep_period)
         return None
+
+
+    def shutdown(self):
+        '''Shuts down reservation wait. Implementations have to cal this method to gracefully shutdown threadpool executor.'''
+        if not self._future.done():
+            self._future.cancel() # Cancels future (only works if future did not start execution yet. Returns True on success, False on failure)
+        self._thread_executor.shutdown()
+
 
 
 
