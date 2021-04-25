@@ -32,6 +32,8 @@ class Node(object):
     def extra_info(self):
         return self._extra_info
 
+    def __str__(self):
+        return ','.join([self._node_id, self._hostname, self._ip_local, self._ip_public, self._port, '|'.join(('{}={}'.format(key, val) for key, val in self._extra_info))])
 
 
 class Reservation(object):
@@ -131,9 +133,7 @@ class _AbstractReservationRequest(object):
         num_nodes (int): Number of nodes in reservation.
         duration_minutes (int): Number of minutes to reserve nodes.
         location (str, optional): Location for reserved nodes.
-        extra_info (dict, optional): Key-value mapping with extra info.
-
-    '''
+        extra_info (dict, optional): Key-value mapping with extra info.'''
     def __init__(self, num_nodes, location='', extra_info=dict()):
         self._num_nodes = num_nodes
         self._location = location
@@ -160,7 +160,7 @@ class ReservationRequest(_AbstractReservationRequest):
         duration_minutes (int): Number of minutes to reserve nodes.
         location (str, optional): Location for reserved nodes.'''
     def __init__(self, num_nodes, duration_minutes, location=''):
-        super.__init__(num_nodes, location=location)
+        super().__init__(num_nodes, location=location)
         self._duration_minutes = duration_minutes
 
     @property
@@ -177,7 +177,7 @@ class TimeSlotReservationRequest(_AbstractReservationRequest):
         duration_end (datetime): End time for reserved nodes.
         location (str, optional): Location for reserved nodes.'''
     def __init__(self, num_nodes, duration_start, duration_end, location=''):
-        super.__init__(num_nodes, location=location)
+        super().__init__(num_nodes, location=location)
         self._duration_start = duration_start
         self._duration_end = duration_end
 
