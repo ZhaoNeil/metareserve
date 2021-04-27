@@ -1,3 +1,11 @@
 '''A package providing a unified reservation interface'''
 
-__version__ = '0.1.0'
+from .reservation import Node
+from .reservation import Reservation
+from .reservation import ReservationWait
+from .reservation import ReservationRequest
+from .reservation import TimeSlotReservationRequest
+
+from .reservation_interface import ReservationInterface
+
+__version__ = '0.1.1'

@@ -36,27 +36,36 @@ class Node(object):
     def extra_info(self):
         return self._extra_info
 
+    @staticmethod
+    def from_string(string):
+        node_id, node_name, ip_local, ip_public, port, dictentry_string = string.split('|', 5)
+        return Node(int(node_id), node_name, ip_local, ip_public, int(port), extra_info={key: val for (key, val) in (x.split('=') for x in dictentry_string.split('|'))})
+
     def __str__(self):
-        return ','.join([self._node_id, self._hostname, self._ip_local, self._ip_public, self._port, '|'.join(('{}={}'.format(key, val) for key, val in self._extra_info))])
+        return '|'.join(str(x) for x in [self._node_id, self._hostname, self._ip_local, self._ip_public, self._port, '|'.join('{}={}'.format(key, val) for key, val in self._extra_info.items())])
 
 
 class Reservation(object):
     def __init__(self, nodes):
-        self._nodes = {x.node_id: x for x in nodes}
+            self._nodes = {x.node_id: x for x in nodes}
 
+    @property
+    def nodes(self):
+        return self._nodes.values()
+    
 
-    '''Search for and return a node.
-    Args:
-        node_id (optional int): If set, searches for node using its ID. Returns in O(1).
-        hostname (optional str): if set, searches for node using its hostname. Returns in O(n).
-    
-    Raises:
-        ValueError, if neither id nor hostname provided.
-        KeyError, if no Node was found.
-    
-    Returns:
-        Found Node instance.'''
     def get_node(self, node_id=-1, hostname=''):
+        '''Search for and return a node.
+        Args:
+            node_id (optional int): If set, searches for node using its ID. Returns in O(1).
+            hostname (optional str): if set, searches for node using its hostname. Returns in O(n).
+        
+        Raises:
+            ValueError, if neither id nor hostname provided.
+            KeyError, if no Node was found.
+        
+        Returns:
+            Found Node instance.'''
         if node_id != -1: # search by id
             return self._nodes(node_id)
         elif any(hostname):
@@ -66,6 +75,16 @@ class Reservation(object):
                 raise KeyError('Could not find hostname {} in reservation. Available hostnames: {}'.format(hostname, ', '.join(self._nodes.values())))
         else:
             raise ValueError('To get a node, please either set node_id or specify a hostname.')
+
+
+    @staticmethod
+    def from_string(string):
+        return Reservation([Node.from_string(line) for line in string.split('\n')])
+
+
+    def __str__(self):
+        return '\n'.join(str(x) for x in self._nodes)
+
 
     def __len__(self):
         return len(self._nodes)
@@ -83,9 +102,12 @@ class ReservationWait(object):
         FAILED = 2
 
     def __init__(self, func, *args, status=Status.PENDING):
-        self._thread_executor = ThreadPoolExecutor(max_workers=1)
-        self._future = self._thread_executor.submit(func, *args)
-        self._future.add_done_callback(lambda x: self._status = Status.FAILED if x.is_cancelled() else Status.SUCCESS)
+        self._thread_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        def stat_func(stat, func, *args):
+            val = func(*args)
+            stat._status = Status.SUCCESS
+            return val
+        self._future = self._thread_executor.submit(stat_func, self, func, *args)
         self._status = status
 
 

@@ -11,7 +11,7 @@ install_requires = [x for x in read('requirements.txt').strip().split('\n') if x
 
 setuptools.setup(
     name='metareserve',
-    version='0.1.0',
+    version='0.1.1',
     author='Sebastiaan Alvarez Rodriguez',
     author_email='a@b.c',
     description='A package providing a unified reservation interface',
