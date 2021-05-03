@@ -83,7 +83,7 @@ class Reservation(object):
 
 
     def __str__(self):
-        return '\n'.join(str(x) for x in self._nodes)
+        return '\n'.join(str(x) for x in self.nodes)
 
 
     def __len__(self):
