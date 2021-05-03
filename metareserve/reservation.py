@@ -38,7 +38,11 @@ class Node(object):
 
     @staticmethod
     def from_string(string):
-        node_id, node_name, ip_local, ip_public, port, dictentry_string = string.split('|', 5)
+        try:
+            node_id, node_name, ip_local, ip_public, port, dictentry_string = string.split('|', 5)
+        except ValueError as e:
+            print('Line malformed: {}'.format(string))
+            raise e
         return Node(int(node_id), node_name, ip_local, ip_public, int(port), extra_info={key: val for (key, val) in (x.split('=') for x in dictentry_string.split('|'))})
 
     def __str__(self):
