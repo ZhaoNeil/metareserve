@@ -70,10 +70,10 @@ class Reservation(object):
         
         Returns:
             Found Node instance.'''
-        if node_id != -1: # search by id
-            return self._nodes(node_id)
+        if node_id != -1: # get by id (in O(1))
+            return self._nodes[node_id]
         elif any(hostname):
-            try: # search by hostname
+            try: # search by hostname (worst case O(n), average O(n/2))
                 return next(x for x in self._nodes.values() if x.hostname == hostname)
             except StopIteration as e:
                 raise KeyError('Could not find hostname {} in reservation. Available hostnames: {}'.format(hostname, ', '.join(self._nodes.values())))
