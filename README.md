@@ -6,4 +6,4 @@ A generic reservation interface.
 
 
 ## Installing
-Simply run `pip3 install metareserve --user`.
+Simply run `pip3 install . --user`.
